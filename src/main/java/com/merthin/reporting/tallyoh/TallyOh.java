@@ -30,20 +30,50 @@ public class TallyOh {
     public void tallySlocForDir(File dir) {
     }
 
-    public void tallySlocForFile(File file) throws IOException {
+    public int tallySlocForFile(File file) throws IOException {
         Template template = getTemplate(file);
+        Pattern commentLinePattern = Pattern.compile("^\\s*" + template.getSingleLineCommentPattern());
         Pattern slocPattern = Pattern.compile(template.getEndPattern());
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-            System.out.println(line);
+        Pattern commentStart = Pattern.compile("^\\s*" + template.getCommentBlockStartPattern());
+        Pattern commentEnd = Pattern.compile(template.getCommentBlockEndPattern());
+        int count = 0;
+        boolean inCommentBlock = false;
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                if (inCommentBlock) {
+                    if (commentEnd.matcher(line).find()) {
+                        inCommentBlock = false;
+                    }
+                    continue;
+                }
+                if (commentLinePattern.matcher(line).find()) {
+                    continue;
+                }
+                if (commentStart.matcher(line).find()) {
+                    inCommentBlock = true;
+                    continue;
+                }
+                if (slocPattern.matcher(line).find()) {
+                    count++;
+                }
+            }
         }
+        return count;
     }
 
     private Template getTemplate(File file) {
         try {
+            String key = "bogus";
             String mimeType = Files.probeContentType(file.toPath());
-            System.out.println(mimeType);
-            return templates.getOrDefault(mimeType, new BaseTemplate());
+            if (mimeType != null) {
+                key = mimeType;
+            } else {
+                String[] tokens = file.toString().split("\\.");
+                if (tokens.length > 1) {
+                    key = tokens[tokens.length - 1];
+                }
+            }
+            return templates.getOrDefault(key, new BaseTemplate());
         } catch (IOException e) {
             e.printStackTrace();
         }

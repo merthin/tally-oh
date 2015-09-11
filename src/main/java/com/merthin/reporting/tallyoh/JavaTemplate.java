@@ -2,12 +2,23 @@ package com.merthin.reporting.tallyoh;
 
 public class JavaTemplate implements Template {
 
+    @Override
     public String getEndPattern() {
-        return ";";
+        return "[;{}]";
     }
 
+    @Override
     public String getSingleLineCommentPattern() {
-        return "////";
+        return "//";
     }
 
+    @Override
+    public String getCommentBlockStartPattern() {
+        return "/\\*";
+    }
+
+    @Override
+    public String getCommentBlockEndPattern() {
+        return "\\*/";
+    }
 }
