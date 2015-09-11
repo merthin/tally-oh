@@ -24,7 +24,7 @@ public class TallyOh {
     }
 
     public void configure() {
-
+        templates.put("java", new JavaTemplate());
     }
 
     public void tallySlocForDir(File dir) {
